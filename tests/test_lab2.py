@@ -1,8 +1,11 @@
 """
 Autograder tests for Lab 2: Dynamic Programming in Gridworld.
 
-Expected student file: src/lab2/dp.py
-Expected functions:
+Expected student files:
+    - src/dp.py
+    - src/utils/utils.py  (optional helpers)
+
+Expected functions in dp.py:
     - policy_evaluation(env, policy, gamma=0.99, theta=1e-6)
     - policy_improvement(env, V, gamma=0.99)
     - policy_iteration(env, gamma=0.99, theta=1e-6)
@@ -12,7 +15,7 @@ Expected functions:
 import numpy as np
 
 from src.envs.gridworld import GridworldEnv
-from src.lab2.dp import (
+from src.dp import (
     policy_evaluation,
     policy_improvement,
     policy_iteration,
@@ -20,26 +23,26 @@ from src.lab2.dp import (
 )
 
 
-def _enumerate_states(env: GridworldEnv):
+def enumerate_states(env: GridworldEnv):
     """
-    Helper: enumerate all valid (row, col) states in the grid.
-    Returns:
-        states: list of (row, col)
+    Enumerate all valid (row, col) states in the grid.
+    Walls (#) are excluded.
     """
     states = []
     for r in range(env.n_rows):
         for c in range(env.n_cols):
-            # We treat all non-wall cells as states
             if env.grid[r][c] != "#":
                 states.append((r, c))
     return states
 
 
-def _state_index_map(env: GridworldEnv):
+def state_index_maps(env: GridworldEnv):
     """
-    Helper: map (row, col) -> index and index -> (row, col).
+    Create mappings:
+        (row, col) -> index
+        index -> (row, col)
     """
-    states = _enumerate_states(env)
+    states = enumerate_states(env)
     idx_map = {s: i for i, s in enumerate(states)}
     rev_map = {i: s for i, s in enumerate(states)}
     return idx_map, rev_map
@@ -47,15 +50,15 @@ def _state_index_map(env: GridworldEnv):
 
 def test_policy_evaluation_converges_random_policy():
     """
-    Basic sanity check: policy_evaluation should return a finite value vector
+    policy_evaluation should return a finite value vector
     for a uniform random policy.
     """
     env = GridworldEnv()
-    idx_map, _ = _state_index_map(env)
+    idx_map, _ = state_index_maps(env)
     n_states = len(idx_map)
     n_actions = env.action_space.n
 
-    # Uniform random policy over actions for each state
+    # Uniform random policy
     policy = np.ones((n_states, n_actions)) / n_actions
 
     V = policy_evaluation(env, policy, gamma=0.99, theta=1e-6)
@@ -72,11 +75,10 @@ def test_policy_improvement_returns_valid_policy():
     - rows sum to 1
     """
     env = GridworldEnv()
-    idx_map, _ = _state_index_map(env)
+    idx_map, _ = state_index_maps(env)
     n_states = len(idx_map)
     n_actions = env.action_space.n
 
-    # Dummy value function (zeros)
     V = np.zeros(n_states)
 
     policy = policy_improvement(env, V, gamma=0.99)
@@ -85,8 +87,7 @@ def test_policy_improvement_returns_valid_policy():
     assert policy.shape == (n_states, n_actions), (
         f"policy must have shape ({n_states}, {n_actions})"
     )
-    row_sums = policy.sum(axis=1)
-    assert np.allclose(row_sums, 1.0), "Each row of policy must sum to 1"
+    assert np.allclose(policy.sum(axis=1), 1.0), "Each row of policy must sum to 1"
 
 
 def test_policy_iteration_returns_V_and_policy():
@@ -97,7 +98,7 @@ def test_policy_iteration_returns_V_and_policy():
     Both must have correct shapes and finite values.
     """
     env = GridworldEnv()
-    idx_map, _ = _state_index_map(env)
+    idx_map, _ = state_index_maps(env)
     n_states = len(idx_map)
     n_actions = env.action_space.n
 
@@ -121,7 +122,7 @@ def test_value_iteration_returns_V_and_policy():
     Both must have correct shapes and finite values.
     """
     env = GridworldEnv()
-    idx_map, _ = _state_index_map(env)
+    idx_map, _ = state_index_maps(env)
     n_states = len(idx_map)
     n_actions = env.action_space.n
 
@@ -139,12 +140,12 @@ def test_value_iteration_returns_V_and_policy():
 
 def test_policy_and_value_iteration_consistency():
     """
-    Optional stronger check:
+    Stronger check:
     The greedy policy from value_iteration should be consistent
     with the policy from policy_iteration (up to ties).
     """
     env = GridworldEnv()
-    idx_map, _ = _state_index_map(env)
+    idx_map, _ = state_index_maps(env)
     n_states = len(idx_map)
 
     V_pi, policy_pi = policy_iteration(env, gamma=0.99, theta=1e-6)
@@ -153,15 +154,13 @@ def test_policy_and_value_iteration_consistency():
     assert V_pi.shape == V_vi.shape == (n_states,)
     assert policy_pi.shape == policy_vi.shape
 
-    # We don't require exact equality (ties may differ),
-    # but we do require that both policies are deterministic
-    # (one action with probability ~1 per state).
+    # Both policies should be deterministic (one action ~1.0)
     pi_max = policy_pi.max(axis=1)
     vi_max = policy_vi.max(axis=1)
 
     assert np.allclose(pi_max, 1.0, atol=1e-3), (
-        "Policy from policy_iteration should be (approximately) deterministic."
+        "Policy from policy_iteration should be deterministic."
     )
     assert np.allclose(vi_max, 1.0, atol=1e-3), (
-        "Policy from value_iteration should be (approximately) deterministic."
+        "Policy from value_iteration should be deterministic."
     )

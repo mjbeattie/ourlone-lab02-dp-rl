@@ -1,44 +1,53 @@
-import argparse
+"""
+Main driver for Lab 2: Dynamic Programming in Gridworld.
+Placed in: src/main.py
+"""
+
 import numpy as np
+from src.envs.gridworld import GridworldEnv
+from src.dp import (
+    policy_evaluation,
+    policy_improvement,
+    policy_iteration,
+    value_iteration,
+)
+from src.utils.utils import (
+    enumerate_states,
+    build_state_index_maps,
+)
 
-from src.envs.make_grid import make_env
-from src.agents.random_agent import RandomAgent
-from src.utils.plotting import plot_rewards
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env", type=str, default="FrozenLake-v1")
-    parser.add_argument("--episodes", type=int, default=20)
-    parser.add_argument("--seed", type=int, default=0)
-    return parser.parse_args()
+def print_value_function(V, index_to_state):
+    print("\nValue Function:")
+    for idx, val in enumerate(V):
+        r, c = index_to_state[idx]
+        print(f"State {(r, c)}: {val:.3f}")
 
-def run_episode(env, agent):
-    state, _ = env.reset()
-    done = False
-    total_reward = 0
 
-    while not done:
-        action = agent.select_action(state)
-        state, reward, terminated, truncated, _ = env.step(action)
-        env.render()
-        total_reward += reward
-        done = terminated or truncated
+def print_policy(policy, index_to_state):
+    arrows = {0: "↑", 1: "→", 2: "↓", 3: "←"}
 
-    return total_reward
+    print("\nPolicy:")
+    for idx, probs in enumerate(policy):
+        r, c = index_to_state[idx]
+        a = np.argmax(probs)
+        print(f"State {(r, c)}: {arrows[a]}")
+
 
 def main():
-    args = parse_args()
-    env = make_env(args.env, seed=args.seed)
-    agent = RandomAgent(env)
+    env = GridworldEnv()
+    state_to_index, index_to_state = build_state_index_maps(env)
 
-    rewards = []
-    for ep in range(args.episodes):
-        ep_reward = run_episode(env, agent)
-        rewards.append(ep_reward)
-        print(f"Episode {ep}: reward={ep_reward}")
+    print("\n=== Policy Iteration ===")
+    V_pi, policy_pi = policy_iteration(env)
+    print_value_function(V_pi, index_to_state)
+    print_policy(policy_pi, index_to_state)
 
-    print("Average reward:", np.mean(rewards))
-    plot_rewards(rewards)
+    print("\n=== Value Iteration ===")
+    V_vi, policy_vi = value_iteration(env)
+    print_value_function(V_vi, index_to_state)
+    print_policy(policy_vi, index_to_state)
+
 
 if __name__ == "__main__":
     main()

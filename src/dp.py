@@ -1,96 +1,43 @@
 """
+Reinforcement Learning Lab 02: Dynamic Programming
 Dynamic Programming algorithms for Gridworld.
 Placed in: src/dp.py
 """
 
 import numpy as np
-from src.utils.utils import (
-    enumerate_states,
-    build_state_index_maps,
-    get_next_state_and_reward,
-)
-
 
 def policy_evaluation(env, policy, gamma=0.99, theta=1e-6):
     """
-    Evaluate a given policy using iterative policy evaluation.
-
-    Args:
-        env: GridworldEnv
-        policy: np.ndarray of shape (n_states, n_actions)
-        gamma: discount factor
-        theta: convergence threshold
-
-    Returns:
-        V: np.ndarray of shape (n_states,)
+    TODO: Implement iterative policy evaluation.
+    policy: shape (n_states, n_actions)
+    Returns V: shape (n_states,)
     """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
-    n_actions = env.action_space.n
-
-    V = np.zeros(n_states)
-
-    # STUDENT TODO: implement iterative policy evaluation
-    raise NotImplementedError
+    # TODO: Write your policy evaluation algorithm here.
+    raise NotImplementedError("policy_evaluation is not implemented yet.")
 
 
 def policy_improvement(env, V, gamma=0.99):
     """
-    Improve a policy given a value function.
-
-    Args:
-        env: GridworldEnv
-        V: np.ndarray of shape (n_states,)
-        gamma: discount factor
-
-    Returns:
-        policy: np.ndarray of shape (n_states, n_actions)
+    TODO: Implement greedy policy improvement.
+    Returns new_policy: shape (n_states, n_actions)
     """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
-    n_actions = env.action_space.n
-
-    policy = np.zeros((n_states, n_actions))
-
-    # STUDENT TODO: implement greedy policy improvement
-    raise NotImplementedError
+    # TODO: Write your policy improvement algorithm here.
+    raise NotImplementedError("policy_improvement is not implemented yet.")
 
 
 def policy_iteration(env, gamma=0.99, theta=1e-6):
     """
-    Run full policy iteration:
-        1. Evaluate policy
-        2. Improve policy
-        until convergence.
-
-    Returns:
-        V: np.ndarray
-        policy: np.ndarray
+    TODO: Implement full policy iteration.
+    Returns (V, policy)
     """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
-    n_actions = env.action_space.n
-
-    # Initialize uniform random policy
-    policy = np.ones((n_states, n_actions)) / n_actions
-
-    # STUDENT TODO: implement policy iteration loop
-    raise NotImplementedError
+    # TODO: Write your policy iteration algorithm here.
+    raise NotImplementedError("policy_iteration is not implemented yet.")
 
 
 def value_iteration(env, gamma=0.99, theta=1e-6):
     """
-    Run value iteration using the Bellman optimality update.
-
-    Returns:
-        V: np.ndarray
-        policy: np.ndarray
+    TODO: Implement value iteration.
+    Returns (V, policy)
     """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
-    n_actions = env.action_space.n
-
-    V = np.zeros(n_states)
-
-    # STUDENT TODO: implement value iteration
-    raise NotImplementedError
+    # TODO: Write your value iteration algorithm here.
+    raise NotImplementedError("value_iteration is not implemented yet.")

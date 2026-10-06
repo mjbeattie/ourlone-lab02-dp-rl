@@ -1,49 +1,30 @@
 """
+Reinforcement Learning Lab 02: Dynamic Programming
 Dynamic Programming algorithms for Gridworld.
-Instructor solution key.
-Placed in: src/dp.py
+Instructor solution
+Placed in: src/dp_solution.py
 """
 
 import numpy as np
-from src.utils.utils import (
-    enumerate_states,
-    build_state_index_maps,
-    get_next_state_and_reward,
-)
-
 
 def policy_evaluation(env, policy, gamma=0.99, theta=1e-6):
-    """
-    Evaluate a given policy using iterative policy evaluation.
-    """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
-    n_actions = env.action_space.n
-
+    n_states = env.n_rows * env.n_cols
     V = np.zeros(n_states)
 
     while True:
         delta = 0
-        new_V = np.copy(V)
-
-        for idx in range(n_states):
-            state = index_to_state[idx]
+        for s in range(n_states):
+            r, c = env.index_to_state[s]
+            if env.grid[r][c] in ("T", "G"):
+                continue
 
             v = 0
-            for a in range(n_actions):
-                prob = policy[idx, a]
-                next_state, reward, terminated = get_next_state_and_reward(env, state, a)
-                next_idx = state_to_index[next_state]
+            for a, prob in enumerate(policy[s]):
+                next_state, reward = env.get_next_state_and_reward((r, c), a)
+                v += prob * (reward + gamma * V[next_state])
 
-                if terminated:
-                    v += prob * reward
-                else:
-                    v += prob * (reward + gamma * V[next_idx])
-
-            new_V[idx] = v
-            delta = max(delta, abs(V[idx] - new_V[idx]))
-
-        V = new_V
+            delta = max(delta, abs(v - V[s]))
+            V[s] = v
 
         if delta < theta:
             break
@@ -52,48 +33,31 @@ def policy_evaluation(env, policy, gamma=0.99, theta=1e-6):
 
 
 def policy_improvement(env, V, gamma=0.99):
-    """
-    Improve a policy given a value function.
-    Returns a greedy policy.
-    """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
+    n_states = env.n_rows * env.n_cols
     n_actions = env.action_space.n
 
     policy = np.zeros((n_states, n_actions))
 
-    for idx in range(n_states):
-        state = index_to_state[idx]
+    for s in range(n_states):
+        r, c = env.index_to_state[s]
+        if env.grid[r][c] in ("T", "G"):
+            continue
 
-        action_values = np.zeros(n_actions)
+        q_values = np.zeros(n_actions)
         for a in range(n_actions):
-            next_state, reward, terminated = get_next_state_and_reward(env, state, a)
-            next_idx = state_to_index[next_state]
+            next_state, reward = env.get_next_state_and_reward((r, c), a)
+            q_values[a] = reward + gamma * V[next_state]
 
-            if terminated:
-                action_values[a] = reward
-            else:
-                action_values[a] = reward + gamma * V[next_idx]
-
-        # Greedy action
-        best_action = np.argmax(action_values)
-        policy[idx, best_action] = 1.0
+        best_a = np.argmax(q_values)
+        policy[s][best_a] = 1.0
 
     return policy
 
 
 def policy_iteration(env, gamma=0.99, theta=1e-6):
-    """
-    Full policy iteration:
-        1. Evaluate policy
-        2. Improve policy
-        until stable.
-    """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
+    n_states = env.n_rows * env.n_cols
     n_actions = env.action_space.n
 
-    # Start with uniform random policy
     policy = np.ones((n_states, n_actions)) / n_actions
 
     while True:
@@ -109,41 +73,29 @@ def policy_iteration(env, gamma=0.99, theta=1e-6):
 
 
 def value_iteration(env, gamma=0.99, theta=1e-6):
-    """
-    Value iteration using Bellman optimality updates.
-    """
-    state_to_index, index_to_state = build_state_index_maps(env)
-    n_states = len(state_to_index)
+    n_states = env.n_rows * env.n_cols
     n_actions = env.action_space.n
 
     V = np.zeros(n_states)
 
     while True:
         delta = 0
-        new_V = np.copy(V)
+        for s in range(n_states):
+            r, c = env.index_to_state[s]
+            if env.grid[r][c] in ("T", "G"):
+                continue
 
-        for idx in range(n_states):
-            state = index_to_state[idx]
-
-            action_values = np.zeros(n_actions)
+            q_values = np.zeros(n_actions)
             for a in range(n_actions):
-                next_state, reward, terminated = get_next_state_and_reward(env, state, a)
-                next_idx = state_to_index[next_state]
+                next_state, reward = env.get_next_state_and_reward((r, c), a)
+                q_values[a] = reward + gamma * V[next_state]
 
-                if terminated:
-                    action_values[a] = reward
-                else:
-                    action_values[a] = reward + gamma * V[next_idx]
-
-            new_V[idx] = np.max(action_values)
-            delta = max(delta, abs(V[idx] - new_V[idx]))
-
-        V = new_V
+            v_new = np.max(q_values)
+            delta = max(delta, abs(v_new - V[s]))
+            V[s] = v_new
 
         if delta < theta:
             break
 
-    # Extract greedy policy
     policy = policy_improvement(env, V, gamma)
-
     return V, policy
